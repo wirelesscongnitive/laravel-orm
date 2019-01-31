@@ -38,6 +38,7 @@ class Select
      * @param $params
      * @return Record
      */
+
     public static function like($record,$params){
         self::$selectObj = DB::table($record->table);
         if(is_array($params) && count($params) > 0){
