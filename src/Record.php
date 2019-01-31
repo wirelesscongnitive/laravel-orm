@@ -12,6 +12,6 @@ namespace WirelessCognitive\LaravelOrm;
 class Record
 {
     public function select(){
-        echo 'select';
+        echo 'select12';
     }
 }
