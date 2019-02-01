@@ -18,6 +18,7 @@ class Select
      * 等于条件的信息
      * @param $record Record
      * @param $params
+     * @return Record
      */
     public static function equal($record,$params){
         self::$selectObj = DB::table($record->table);
@@ -28,13 +29,16 @@ class Select
                 }
             }
         }
+        return $record;
     }
 
     /**
      * 模糊查询条件
      * @param $record Record
      * @param $params
+     * @return Record
      */
+
     public static function like($record,$params){
         self::$selectObj = DB::table($record->table);
         if(is_array($params) && count($params) > 0){
@@ -44,5 +48,6 @@ class Select
                 }
             }
         }
+        return $record;
     }
 }
