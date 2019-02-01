@@ -1,38 +1,72 @@
 <?php
 namespace WirelessCognitive\LaravelOrm;
 use Illuminate\Support\Facades\DB;
+use phpDocumentor\Reflection\Types\Static_;
 
 /**
  * Created by PhpStorm.
  * User: dell
  * Date: 2019/1/21
  * Time: 9:24
- * @method static void equal(array $params)
- * @method static void like(array $params)
+ * @method static $this equal(array $params)
+ * @method static $this like(array $params)
  * @method static $this order(string $field,string $type)
- * @method static void fromTo(array $params)
- * @method static void keyword(array $fields,string $keywords)
- * @method static void timeZone(array $time_array)
- * @method static array select()
+ * @method static $this fromTo(array $params)
+ * @method static $this keyword(array $fields,string $keywords)
+ * @method static $this timeZone(array $time_array)
+ * @method static $this page(int $page,int $step)
+ * @method static array select(\Closure $function = '')
+ * @method static $this where($column, $operator = null, $value = null, $boolean = 'and')
+ * @method ststic $this distinct()
+ * @method static $this orWhere($column, $operator = null, $value = null)
+ * @method static $this whereIn($column, $values, $boolean = 'and', $not = false)
+ * @method static $this orWhereIn($column, $values)
+ * @method static $this whereNotIn($column, $values, $boolean = 'and')
+ * @method static $this orWhereNotIn($column, $values)
+ * @method static $this whereNull($column, $boolean = 'and', $not = false)
+ * @method static $this orWhereNull($column)
+ * @method static $this whereNotNull($column, $boolean = 'and')
+ * @method static $this whereBetween($column, array $values, $boolean = 'and', $not = false)
+ * @method static $this orWhereBetween($column, array $values)
+ * @method static $this whereNotBetween($column, array $values, $boolean = 'and')
+ * @method static $this orWhereNotBetween($column, array $values)
+ * @method static $this orWhereNotNull($column)
+ * @method static $this whereSub($column, $operator, Closure $callback, $boolean)
+ * @method static $this groupBy(...$groups)
+ * @method static $this offset($value)
+ * @method static $this limit($value)
+ * @method Static $this forPageAfterId($perPage = 15, $lastId = 0, $column = 'id')
+ * @method static $this toSql()
+ * @method static $this count($columns = '*')
+ * @method static $this min($column)
+ * @method static $this max($column)
+ * @method static $this sum($column)
+ * @method static $this average($column)
  */
 class Record{
     /** @var $table string 表名称 */
     public $table = '';
+
     /** @var $fields array 字段名称数组 */
     public $fields = [];
+
     /** @var $nowRecord Record 当前的record表对象 */
     public $nowRecord;
+
     /** @var $table_name string 当前的数据表名称 */
     public $table_name;
-    /** @var bool $user_hiddle_fields 是否使用隐藏字段 */
+
+    /** @var $cacheObj Cache */
+    public $cacheObj;
+
     /**
+     * @var bool $user_hiddle_fields 是否使用隐藏字段
      * 隐藏字段包含
      * is_open 记录是否开启暂时用于软删除
      * open_close_time 上次开启或者关闭的时间
      */
     public static $use_hidden_fields = false;
-    /** @var $cacheObj Cache */
-    public $cacheObj;
+
     public function __construct()
     {
         $this->cacheObj = new Cache();
@@ -50,8 +84,12 @@ class Record{
         /* @var $model Record */
         $model = new $model;
         array_unshift($arguments,$model);
-        Select::$name(...$arguments);
-        return $model;
+        if($name == 'select'){
+            return Select::$name(...$arguments);
+        }else{
+            Select::$name(...$arguments);
+            return $model;
+        }
     }
 
     /**
@@ -63,8 +101,12 @@ class Record{
     public function __call($name,$arguments)
     {
         array_unshift($arguments,$this);
-        Select::$name(...$arguments);
-        return $this;
+        if($name == 'select'){
+            return Select::$name(...$arguments);
+        }else{
+            Select::$name(...$arguments);
+            return $this;
+        }
     }
 
     /**
