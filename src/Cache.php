@@ -1,8 +1,6 @@
 <?php
 namespace WirelessCognitive\LaravelOrm;
 
-use Illuminate\Support\Facades\Redis;
-use mysql_xdevapi\Exception;
 
 /**
  * Created by PhpStorm.
@@ -13,7 +11,7 @@ use mysql_xdevapi\Exception;
 class Cache{
     /** @var $redisConnection \Redis 自定义缓存连接 */
     public static $redisConnection;
-    /** @var array $redisConfig laaravel的redis相关的配置 */
+    /** @var array $redisConfig laravel的redis相关的配置 */
     public static $redisConfig = [];
 
     /**
