@@ -60,7 +60,7 @@ class Record{
      * @param $arguments
      * @return Record
      */
-    public function __call($name, $arguments)
+    public function __call($name,$arguments)
     {
         array_unshift($arguments,$this);
         Select::$name(...$arguments);
@@ -139,7 +139,7 @@ class Record{
             DB::table($table)->where('id',$id)->delete();
         }
         //对id缓存进行清空
-       $cacheObj = new Cache();
+        $cacheObj = new Cache();
         $cacheObj->deleteIdCache($id,$table);
     }
 
