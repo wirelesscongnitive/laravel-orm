@@ -10,7 +10,8 @@
   "require": {
     "php": ">=7.0",
     "laravel/framework": "5.6.*",
-    "ext-redis": "^4.2"
+    "ext-redis": "^4.2",
+    "ext-json": "^1.6"
   },
   "autoload": {
     "psr-4": {

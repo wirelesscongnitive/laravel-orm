@@ -1,8 +1,6 @@
 <?php
 namespace WirelessCognitive\LaravelOrm;
 use Illuminate\Support\Facades\DB;
-use phpDocumentor\Reflection\Types\Static_;
-use phpDocumentor\Reflection\Types\Void_;
 
 /**
  * Created by PhpStorm.
@@ -44,16 +42,29 @@ class Record{
      * 调用静态方法向静态类进行转发
      * @param $name
      * @param $arguments
+     * @return Record
      */
     public static function __callStatic($name, $arguments)
     {
         $model = get_called_class();
         /* @var $model Record */
         $model = new $model;
-        $table_name = self::getTable();
         array_unshift($arguments,$model);
-        $selectObj = Select::$name(...$arguments);
-        return $selectObj;
+        Select::$name(...$arguments);
+        return $model;
+    }
+
+    /**
+     * 非静态方法的转发类
+     * @param $name
+     * @param $arguments
+     * @return Record
+     */
+    public function __call($name, $arguments)
+    {
+        array_unshift($arguments,$this);
+        Select::$name(...$arguments);
+        return $this;
     }
 
     /**
@@ -69,7 +80,7 @@ class Record{
         if(isset($this->id)){
             //隐藏字段拼接
             if(self::$use_hidden_fields){
-                $toUpdateArray['update_time'] = $this->getMicrotime();
+                $toUpdateArray['update_time'] = $this->getMicroTime();
             }
             //更新数据库
             DB::table($this->table)->where('id',$this->id)->update($toUpdateArray);
@@ -89,7 +100,7 @@ class Record{
         }
         //隐藏字段拼接
         if(self::$use_hidden_fields){
-            $toInsertArray['create_time'] = $this->getMicrotime();
+            $toInsertArray['create_time'] = $this->getMicroTime();
             $toInsertArray['is_open'] = 1;
         }
         //存入数据库
@@ -104,10 +115,10 @@ class Record{
      * 获取精确到毫秒的时间戳
      * @return float
      */
-    private function getMicrotime(){
-        list($msec, $sec) = explode(' ', microtime());
-        $msectime = (float)sprintf('%.0f', (floatval($msec) + floatval($sec)) * 1000);
-        return round($msectime);
+    private function getMicroTime(){
+        list($microTime, $second) = explode(' ', microtime());
+        $fullTime = (float)sprintf('%.0f', (floatval($microTime) + floatval($second)) * 1000);
+        return round($fullTime);
     }
 
     /**
@@ -191,7 +202,7 @@ class Record{
      * @param $model Record
      * @param $field
      * @param $value
-     * @return 返回变更数值后的值
+     * @return mixed
      */
     private static function handleFormat($model,$field,$value){
         if(isset($model->fields[$field])){
