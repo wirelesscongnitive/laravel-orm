@@ -1,7 +1,6 @@
 <?php
 namespace WirelessCognitive\LaravelOrm;
 use Illuminate\Support\Facades\DB;
-use phpDocumentor\Reflection\Types\Static_;
 
 /**
  * Created by PhpStorm.
@@ -15,9 +14,9 @@ use phpDocumentor\Reflection\Types\Static_;
  * @method static $this keyword(array $fields,string $keywords)
  * @method static $this timeZone(array $time_array)
  * @method static $this page(int $page,int $step)
- * @method static array select(\Closure $function = '')
+ * @method static array select(\Closure $function = '',$needReturn = false)
  * @method static $this where($column, $operator = null, $value = null, $boolean = 'and')
- * @method ststic $this distinct()
+ * @method static $this distinct()
  * @method static $this orWhere($column, $operator = null, $value = null)
  * @method static $this whereIn($column, $values, $boolean = 'and', $not = false)
  * @method static $this orWhereIn($column, $values)
@@ -31,7 +30,7 @@ use phpDocumentor\Reflection\Types\Static_;
  * @method static $this whereNotBetween($column, array $values, $boolean = 'and')
  * @method static $this orWhereNotBetween($column, array $values)
  * @method static $this orWhereNotNull($column)
- * @method static $this whereSub($column, $operator, Closure $callback, $boolean)
+ * @method static $this whereSub($column, $operator,\Closure $callback, $boolean)
  * @method static $this groupBy(...$groups)
  * @method static $this offset($value)
  * @method static $this limit($value)
@@ -223,7 +222,11 @@ class Record{
         $cacheObj = new Cache();
         $data = $cacheObj->get($id,$table);
         if(!is_array($data)){
-            $data = DB::table($table)->where('id',$id)->first();
+            if(self::$use_hidden_fields){
+                $data = DB::table($table)->where('id',$id)->where('is_open',1)->first();
+            }else{
+                $data = DB::table($table)->where('id',$id)->first();
+            }
             self::filterHiddenFields($data);
             $cacheObj->addIdCache($id,$table,$data);
         }

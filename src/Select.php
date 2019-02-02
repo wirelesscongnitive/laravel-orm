@@ -118,10 +118,15 @@ class Select
      * 执行查询方法
      * @param $record Record
      * @param string|\Closure $function
+     * @param bool $needReturn 是否需要删除部分冗余参数
      * @return array
      */
-    public static function select($record,$function = ''){
+    public static function select($record,$function = '',$needReturn = false){
         self::initSelectObj($record);
+        //开启了软删除的模式下 需要默认查询尚未被删除的数据
+        if($record::$use_hidden_fields){
+            self::$selectObj->where('is_open',1);
+        }
         $list = $data = [];
         $ids = self::$selectObj->pluck('id')->toArray();
         if(is_array($ids) && count($ids) > 0){
@@ -129,10 +134,11 @@ class Select
                 if($function instanceof \Closure) {
                     $oneInfo = $record->get($id);
                     $function($oneInfo);
-                    $list[] = $oneInfo;
                 }else{
-                    $list[] = $record->get($id);
+                    $oneInfo = $record->get($id);
                 }
+                if($needReturn)self::filterNoData($oneInfo);
+                $list[] = $oneInfo;
             }
         }
         if(self::$needPage){
@@ -146,5 +152,19 @@ class Select
         self::$needPage = false;
         self::$recordTotal = 0;
         return $data;
+    }
+
+    /**
+     * 删除不必要的冗余参数
+     * @param $oneInfo
+     */
+    private static function filterNoData(&$oneInfo){
+        $oneInfo = (array)$oneInfo;
+        $notUseField = ['table','fields','nowRecord','cacheObj','table_name'];
+        foreach ($oneInfo as $key=>$value){
+            if(in_array($key,$notUseField)){
+                unset($oneInfo[$key]);
+            }
+        }
     }
 }
