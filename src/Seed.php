@@ -121,6 +121,7 @@ EOF;
         }
         return $data_type;
     }
+
     /**
      * 蛇形命名转大驼峰命名
      * @param $str
