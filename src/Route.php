@@ -15,7 +15,7 @@ class Route
     public $routeText;
 
     /** @var string $controllerBaseUrl 基础控制器所在的文件夹 */
-    public $controllerBaseUrl = './app/';
+    public $controllerBaseUrl = './app/Controllers/';
 
     /** @var $controllerText string 控制器的文本信息 */
     public $controllerText;
@@ -27,7 +27,24 @@ class Route
     public $thisText = '$this->';
 
     /** @var string $serviceBaseDir 服务层的默认路径 */
-    public $serviceBaseDir = './service/';
+    public $serviceBaseDir = './app/Service/';
+
+    /**
+     * 初始化目录信息
+     * @param $project
+     */
+    private function initDir($project){
+        if(!is_dir($this->controllerBaseUrl)){
+            mkdir($this->controllerBaseUrl,0777);
+        }
+        if(!is_dir($this->serviceBaseDir)){
+            mkdir($this->serviceBaseDir,0777);
+        }
+        if(!is_dir($this->controllerBaseUrl.$project)){
+            mkdir($this->controllerBaseUrl.$project,0777);
+        }
+        $this->projectControllerUrl = $this->controllerBaseUrl.$project."/";
+    }
 
     /**
      * 生成路由文件
@@ -36,24 +53,41 @@ class Route
         set_time_limit(0);
         $data = file_get_contents('./data.json');
         $data = json_decode($data,true);
-        if(isset($data['data']) && isset($data['data']['modules'])){
-            $modules = $data['data']['modules'];
-            if(is_array($modules) && count($modules) > 0){
-                $project = $this->getProject($modules[0]);
-                if(!is_dir($this->controllerBaseUrl.$project)){
-                    mkdir($this->controllerBaseUrl.$project,0777);
-                    $this->projectControllerUrl = $this->controllerBaseUrl.$project."/";
-                }
-                $this->pushToRoute(1,"Route::prefix('".strtolower($project)."')->group(function(){");
-                foreach ($modules as $module){
-                    $this->makeModule($module);
-                }
-                $this->pushToRoute(1,"});");
-                file_put_contents("./route",$this->routeText);
+        if(isset($data['item']) && realArray($data['item'])){
+            $modules = $data['item'];
+            $project = $this->getProject($modules[0]);
+            $this->initDir($project);
+            $this->pushToRoute(0,"<?php");
+            $this->pushToRoute(0,"use Illuminate\Support\Facades\Route;");
+            $this->pushToRoute(1,"Route::prefix('".strtolower($project)."')->group(function(){");
+            $this->makeBaseController();
+            foreach ($modules as $module){
+                $this->makeModule($module);
             }
+            $this->pushToRoute(1,"});");
+            file_put_contents("./app/route.php",$this->routeText);
         }
     }
+    private function makeBaseController(){
+        $text = <<<EOF
+<?php
 
+namespace App\Http\Controllers;
+
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Foundation\Validation\ValidatesRequests;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+
+class Controller extends BaseController
+{
+    use AuthorizesRequests, DispatchesJobs, ValidatesRequests;
+}
+EOF;
+        if(!file_exists($this->controllerBaseUrl."Controller.php")){
+            file_put_contents($this->controllerBaseUrl."Controller.php",$text);
+        }
+    }
     /**
      * 添加到路由文本
      * @param $level
@@ -74,13 +108,29 @@ class Route
      */
     private function getProject($module){
         $projectName = '';
-        if(isset($module['interfaces']) && is_array($module['interfaces']) && count($module['interfaces'])){
-            $data = $this->getProjectGroup($module['interfaces'][0]);
+        if(isset($module['item']) && realArray($module['item'])){
+            $data = $this->getProjectGroup($module['item'][0]);
             $projectName = $data[0];
         }
         return $projectName;
     }
 
+    /**
+     * 获取接口的url数组
+     * @param $interface array
+     * @return array
+     */
+    private function getUrlArray($interface){
+        $urlArray = [];
+        if(
+            isset($interface['request']) &&
+            isset($interface['request']['url']) &&
+            isset($interface['request']['url']['path']) &&
+            realArray($interface['request']['url']['path'])
+        )
+        $urlArray = explode('/',$interface['request']['url']['path'][0]);
+        return $urlArray;
+    }
     /**
      * 生成单一接口的脚手架
      * @param $interface
@@ -88,29 +138,34 @@ class Route
      * @param $project
      */
     public function makeInterface($interface,$project,$group){
-        $urlArray = explode('/',$interface['url']);
-        $action = end($urlArray);
-        $action = $this->convertUnderline($action);
-        $method = strtolower($interface["method"]);
-        $this->pushToRoute(3,"Route::{$method}('{$action}','{$project}\\".$group."Controller@{$action}');");
-        if(is_array($interface['properties']) && count($interface['properties'])){
-            $this->addFunctionNote($interface['properties'],$interface['name']);
-            $requestText = '$request';
-            $lowerAction = strtolower($action);
-            $this->controllerText .= <<<EOF
-public function {$lowerAction}(Request {$requestText}){
-EOF;
-            $this->controllerText .= "\n";
+        $urlArray = $this->getUrlArray($interface);
+        $uri = end($urlArray);
+        $action = convertUnderline($uri);
+        $method = strtolower($interface['request']["method"]);
+        $lowerAction = lcfirst($action);
+        $this->pushToRoute(3,"Route::{$method}('{$uri}','{$project}\\".$group."Controller@{$lowerAction}');//".$interface['name']);
+        if(isset($interface['request']) && isset($interface['request']['body'])){
+            if(isset($interface['request']['body']['formdata']) && realArray($interface['request']['body']['formdata'])){
+                $params = $interface['request']['body']['formdata'];
+            }else if(isset($interface['request']['url']['query'])){
+                $params = $interface['request']['url']['query'];
+            }else{
+                $params = [];
+            }
+            $this->addFunctionNote($params,$interface['name']);
+            $requestText = realArray($params)?"Request ".'$request':"";
+            $this->controllerText .= "\tpublic function {$lowerAction}({$requestText}){\n";
             $arrayName = '$argument';
-            $this->addGetParam($interface['properties'],$method);
+            $this->addGetParam($params,$method);
             $dataText = '$data';
+            $paramsText = realArray($params)?"...{$arrayName}":"";
             $this->controllerText .= <<<EOF
-        {$dataText}={$this->thisText}{$action}Service->handle(...{$arrayName});
+        {$dataText} = {$this->thisText}{$action}Service->handle({$paramsText});
         return succ({$dataText});      
     }
 EOF;
             $this->controllerText .= "\n\n";
-            $this->makeService($action,$group,$interface['properties'],$interface['name']);
+            $this->makeService($action,$group,$params,$interface['name']);
         }
     }
 
@@ -126,23 +181,21 @@ EOF;
             mkdir($this->serviceBaseDir.$group,0777);
         }
         $fileName = $this->serviceBaseDir.$group.'/'.$action.'Service.php';
-        $content = "<?php\nnamespace APP\Http\Service\\".ucfirst($group).";\n\n";
+        $content = "<?php\nnamespace App\Http\Service\\".ucfirst($group).";\n\n";
         $content .= "/**\n/*{$name}\n*/\n";
         $content .= "class ".$action.'Service{'."\n";
         $paramText = '';
         $varText = '$';
         $content .="\t/**\n";
         foreach ($params as $param){
-            $paramText .= '$'.$param['name'].',';
-            $content .= <<<EOF
-/* {$varText}{$param["name"]} {$param["type"]} {$param["description"]}
-    
-EOF;
+            $paramText .= '$'.$param['key'].',';
+            $typeText = isset($param["type"])?$param["type"]:'string';
+            $content .= "\t*\t@param\t{$varText}{$param['key']}\t{$typeText}\t{$param['description']}\n";
         }
-        $content .="\t*/\n";
+        $content .="\t* @return array\n\t*/\n";
         $paramText =rtrim($paramText, ',');
         $content.="\tpublic function handle(".$paramText."){\n\n\n";
-        $content.= "\t\treturn [];";
+        $content.= "\t\treturn ['{$name}'];";
         $content.= "\n\t}\n";
         $content .= "}";
         if(!file_exists($fileName)){
@@ -158,10 +211,11 @@ EOF;
     private function addGetParam($properties,$method){
         $arrayName = '$argument';
         $requestText = '$request->';
+        $this->controllerText .= "\t\t".$arrayName." = [];\n";
         foreach ($properties as $param){
-            $lowerName = strtolower($param['name']);
+            $lowerName = strtolower($param['key']);
             $paramList[] = $lowerName;
-            $this->controllerText .= "\t\t".$arrayName.'["'.$lowerName.'"]  = '.$requestText.'input("'.$method.'.'.$lowerName.'","");'."\n";
+            $this->controllerText .= "\t\t".$arrayName.'[]  = '.$requestText.'input("'.$method.'.'.$lowerName.'","");'."\n";
         }
     }
 
@@ -172,22 +226,17 @@ EOF;
      */
     private function addFunctionNote($properties,$name){
         $requestText = '$request';
-        $this->controllerText .=<<<EOF
-    /**
-    /* {$name}
-    /*  @param Request {$requestText}
-    
-EOF;
+        $this->controllerText .="\t/**\n\t/* {$name}\n";
         foreach ($properties as $param){
-            $this->controllerText .= <<<EOF
-/* {$param["name"]} {$param["type"]} {$param["description"]}
-    
-EOF;
+            $keyName = "$".$param['key'];
+            $typeName = isset($param['type'])?$param['type']:'string';
+            $this->controllerText .= "\t* {$keyName}\t{$typeName}\t{$param['description']}\n";
         }
-        $this->controllerText .=<<<EOF
-*/
-    
-EOF;
+        if(realArray($properties)){
+            $this->controllerText .="\t* @param Request {$requestText}\n\t* @return array\n\t*/\n";
+        }else{
+            $this->controllerText .="\t* @return array\n\t*/\n";
+        }
     }
 
     /**
@@ -195,21 +244,23 @@ EOF;
      * @param $module
      */
     private function makeModule($module){
-        if(isset($module['interfaces']) && is_array($module['interfaces']) && count($module['interfaces'])){
-            list($project,$group) = $this->getProjectGroup($module['interfaces'][0]);
-            $this->controllerText = '<?php'."\n".'namespace App\Http\Controllers\\'.$project.";\n\nuse Illuminate\Http\Request;\n";
-            $actionList = $this->addControllerUser($module['interfaces'],$group);
+        if(isset($module['item']) && realArray($module['item'])){
+            list($project,$group) = $this->getProjectGroup($module['item'][0]);
+            $this->controllerText = '<?php'."\n".'namespace App\Http\Controllers\\'.$project.";\n\nuse Illuminate\Http\Request;\nuse App\Http\Controllers\Controller;\n";
+            $actionList = $this->addControllerUser($module['item'],$group);
             $this->controllerText .=<<<EOF
             
 class {$group}Controller extends Controller{
 
 EOF;
             $this->addControllerInit($actionList);
+            $this->pushToRoute(2,"/**".$module['name']."*/");
             $this->pushToRoute(2,"Route::prefix('".strtolower($group)."')->group(function(){");
-            foreach ($module['interfaces'] as $interface){
+            foreach ($module['item'] as $interface){
                 $this->makeInterface($interface,$project,$group);
             }
             $this->pushToRoute(2,"});");
+            $this->controllerText .= "\n}\n";
             file_put_contents($this->projectControllerUrl.$group."Controller.php",$this->controllerText);
             $this->controllerText = '';
         }
@@ -258,14 +309,15 @@ EOF;
     private function addControllerUser($interfaces,$group){
         $actionList = [];
         foreach ($interfaces as $interface){
-            $urlArray = explode('/',$interface['url']);
+            $urlArray = $this->getUrlArray($interface);
             $action = end($urlArray);
-            $action = $this->convertUnderline($action);
+            $action = convertUnderline($action);
             $actionList[] = $action;
-            $this->controllerText .= "use APP\Http\Service\\".$group."\\".$action."Service;\n";
+            $this->controllerText .= "use App\Http\Service\\".$group."\\".$action."Service;\n";
         }
         return $actionList;
     }
+
     /**
      * 获得项目和分组的信息
      * @param $oneInterface
@@ -273,8 +325,8 @@ EOF;
      */
     private function getProjectGroup($oneInterface){
         $toReturn = [];
-        if(isset($oneInterface['url'])){
-            $urlArray = explode('/',$oneInterface['url']);
+        $urlArray = $this->getUrlArray($oneInterface);
+        if(realArray($urlArray)){
             do{
                 $urlParam = array_shift($urlArray);
                 if(!empty($urlParam)){
@@ -283,34 +335,5 @@ EOF;
             }while(count($toReturn) < 2);
         }
         return $toReturn;
-    }
-
-    /**
-     * 获取远程的接口地址
-     * @param $url
-     * @return bool|string
-     */
-    private function curlGet($url){
-        set_time_limit(0);
-        $curl = curl_init();
-        curl_setopt($curl, CURLOPT_URL, $url);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, FALSE);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, FALSE);
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-        $data = curl_exec($curl);
-        if (curl_errno($curl)) {return 'ERROR '.curl_error($curl);}
-        curl_close($curl);
-        return $data;
-    }
-    /**
-     * 蛇形命名转大驼峰命名
-     * @param $str
-     * @param bool $ucFirst
-     * @return string
-     */
-    private function convertUnderline ( $str , $ucFirst = true){
-        while(($pos = strpos($str , '_'))!==false)
-            $str = substr($str , 0 , $pos).ucfirst(substr($str , $pos+1));
-        return $ucFirst ? ucfirst($str) : $str;
     }
 }

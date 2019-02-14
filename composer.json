@@ -18,6 +18,9 @@
   "autoload": {
     "psr-4": {
       "WirelessCognitive\\LaravelOrm\\": "src/"
-    }
+    },
+    "files": [
+      "src/lib/common.php"
+    ]
   }
 }
