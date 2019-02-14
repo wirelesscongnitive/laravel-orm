@@ -190,6 +190,7 @@ EOF;
         foreach ($params as $param){
             $paramText .= '$'.$param['key'].',';
             $typeText = isset($param["type"])?$param["type"]:'string';
+            if($typeText == 'text')$typeText = 'string';
             $content .= "\t*\t@param\t{$varText}{$param['key']}\t{$typeText}\t{$param['description']}\n";
         }
         $content .="\t* @return array\n\t*/\n";
@@ -230,6 +231,7 @@ EOF;
         foreach ($properties as $param){
             $keyName = "$".$param['key'];
             $typeName = isset($param['type'])?$param['type']:'string';
+            if($typeName == 'text')$typeName = 'string';
             $this->controllerText .= "\t* {$keyName}\t{$typeName}\t{$param['description']}\n";
         }
         if(realArray($properties)){
