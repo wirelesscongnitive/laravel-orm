@@ -182,7 +182,7 @@ EOF;
         }
         $fileName = $this->serviceBaseDir.$group.'/'.$action.'Service.php';
         $content = "<?php\nnamespace App\Http\Service\\".ucfirst($group).";\n\n";
-        $content .= "/**\n/*{$name}\n*/\n";
+        $content .= "/**\n*{$name}\n*/\n";
         $content .= "class ".$action.'Service{'."\n";
         $paramText = '';
         $varText = '$';
@@ -212,7 +212,9 @@ EOF;
     private function addGetParam($properties,$method){
         $arrayName = '$argument';
         $requestText = '$request->';
-        $this->controllerText .= "\t\t".$arrayName." = [];\n";
+        if(realArray($properties)){
+            $this->controllerText .= "\t\t".$arrayName." = [];\n";
+        }
         foreach ($properties as $param){
             $lowerName = strtolower($param['key']);
             $paramList[] = $lowerName;
