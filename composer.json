@@ -1,6 +1,7 @@
 {
   "name": "wirelesscognitive/laravel-orm",
   "description": "an fast orm for laravel",
+  "version":"0.8",
   "authors": [
     {
       "name": "wirelesscognitive"
