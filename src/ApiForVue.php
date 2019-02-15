@@ -128,11 +128,8 @@ class ApiForVue
         }
         $functionName = $this->getFunctionName($request['method'],$urlArray);
         $this->moduleJsText .="export function {$functionName} ({$parameterText}){\n\treturn axios({\n";
-        if($urlArray['module'] == 'helper'){
-            $this->moduleJsText .="\t\turl : '/helper/{$urlArray['api']}',\n";
-        }else{
-            $this->moduleJsText .="\t\turl : '/flat/{$urlArray['module']}/{$urlArray['api']}',\n";
-        }
+        $apiName = ucfirst($urlArray['module']).$this->getApiText($urlArray['api']);
+        $this->moduleJsText .="\t\turl : api.{$apiName},\n";
         $this->moduleJsText.="\t\tmethod : '".strtolower($request['method'])."',\n";
         if(realArray($params)){
             $this->moduleJsText.="\t\tdata : parameter,\n";
