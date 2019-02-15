@@ -2,3 +2,5 @@
 /vendor
 composer.lock
 /data.json
+/app
+index.php
