@@ -182,7 +182,7 @@ EOF;
         }
         $fileName = $this->serviceBaseDir.$group.'/'.$action.'Service.php';
         $content = "<?php\nnamespace App\Http\Service\\".ucfirst($group).";\n\n";
-        $content .= "/**\n/*{$name}\n*/\n";
+        $content .= "/**\n*{$name}\n*/\n";
         $content .= "class ".$action.'Service{'."\n";
         $paramText = '';
         $varText = '$';
@@ -190,6 +190,7 @@ EOF;
         foreach ($params as $param){
             $paramText .= '$'.$param['key'].',';
             $typeText = isset($param["type"])?$param["type"]:'string';
+            if($typeText == 'text')$typeText = 'string';
             $content .= "\t*\t@param\t{$varText}{$param['key']}\t{$typeText}\t{$param['description']}\n";
         }
         $content .="\t* @return array\n\t*/\n";
@@ -211,7 +212,9 @@ EOF;
     private function addGetParam($properties,$method){
         $arrayName = '$argument';
         $requestText = '$request->';
-        $this->controllerText .= "\t\t".$arrayName." = [];\n";
+        if(realArray($properties)){
+            $this->controllerText .= "\t\t".$arrayName." = [];\n";
+        }
         foreach ($properties as $param){
             $lowerName = strtolower($param['key']);
             $paramList[] = $lowerName;
@@ -230,6 +233,7 @@ EOF;
         foreach ($properties as $param){
             $keyName = "$".$param['key'];
             $typeName = isset($param['type'])?$param['type']:'string';
+            if($typeName == 'text')$typeName = 'string';
             $this->controllerText .= "\t* {$keyName}\t{$typeName}\t{$param['description']}\n";
         }
         if(realArray($properties)){
