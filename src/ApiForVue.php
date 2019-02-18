@@ -65,8 +65,8 @@ class ApiForVue
      * @param $module
      */
     private function createModuleJs($module){
-        $this->indexJsText .= "\t/**\n\t *\t{$module['name']}\n\t */\n";
-        $this->moduleJsText = "import\tapi\tfrom\t'./index'\nimport\t{axios}\tfrom\t'@/utils/request'\n";
+        $this->indexJsText .= "  /**\n   *  {$module['name']}\n   */\n";
+        $this->moduleJsText = "import api from './index'\nimport { axios } from '@/utils/request'\n";
         $moduleFileName = '';
         foreach ($module['item'] as $oneApi){
             if(isset($oneApi['request']) && realArray($oneApi['request'])){
@@ -115,11 +115,11 @@ class ApiForVue
         $params = $this->getParams($request);
         if(realArray($params)){
             $parameterText = 'parameter';
-            $this->moduleJsText .= "\n/**\n*\t" . $name . "\n* parameter:{\n";
+            $this->moduleJsText .= "\n/**\n*  " . $name . "\n* parameter:{\n";
             foreach ($params as $key=>$param){
-                $descriptionText = $param['description']?"//\t{$param['description']}":'';
+                $descriptionText = $param['description']?"//  {$param['description']}":'';
                 $valueText = $param['value']?("'".$param['value']."'"):"''";
-                $this->moduleJsText .= "* \t{$param['key']} : {$valueText},{$descriptionText}\n";
+                $this->moduleJsText .= "*   {$param['key']} : {$valueText},{$descriptionText}\n";
             }
             $this->moduleJsText .= "* }\n* @param parameter\n* @returns {*}\n*/\n";
         }else{
@@ -127,21 +127,30 @@ class ApiForVue
             $parameterText = '';
         }
         $functionName = $this->getFunctionName($request['method'],$urlArray);
-        $this->moduleJsText .="export function {$functionName} ({$parameterText}){\n\treturn axios({\n";
+        $this->moduleJsText .="export function {$functionName} ({$parameterText}) {\n  return axios({\n";
         $apiName = ucfirst($urlArray['module']).$this->getApiText($urlArray['api']);
-        $this->moduleJsText .="\t\turl : api.{$apiName},\n";
-        $this->moduleJsText.="\t\tmethod : '".strtolower($request['method'])."',\n";
+        $this->moduleJsText .="    url: api.{$apiName},\n";
+        if($request['method'] == 'PUT' && ! realArray($params)){
+            $comma = '';
+        }else{
+            $comma = ',';
+        }
+        $this->moduleJsText.="    method: '".strtolower($request['method'])."'{$comma}\n";
         if(realArray($params)){
-            $this->moduleJsText.="\t\tdata : parameter,\n";
+            if($request['method'] == 'GET'){
+                $this->moduleJsText.="    data: parameter,\n";
+            }else{
+                $this->moduleJsText.="    data: parameter\n";
+            }
         }
         if($request['method'] == 'GET'){
-            $this->moduleJsText .= "\t\theaders : {\n";
-            $this->moduleJsText .= "\t\t\t'Content-Type' : 'application/json : charset=UTF-8'\n\t\t}\n";
+            $this->moduleJsText .= "    headers: {\n";
+            $this->moduleJsText .= "      'Content-Type': 'application/json : charset=UTF-8'\n    }\n";
         }
-        $this->moduleJsText .="\t})\n}\n";
+        $this->moduleJsText .="  })\n}\n";
     }
 
-    /**
+    /*
      * 获取函数名称
      * @param $method
      * @param $urlArray
@@ -177,14 +186,14 @@ class ApiForVue
     private function addApiToIndex($name,$urlArray){
         $apiText = $this->getApiText($urlArray['api']);
         $apiName = ucfirst($urlArray['module']).$apiText;
-        $this->indexJsText .= "\t{$apiName} : '".($urlArray['module']=='helper'?'':'/flat')."/".$urlArray['module']."/".$urlArray['api']."',\t//".$name."\n";
+        $this->indexJsText .= "  {$apiName}: '".($urlArray['module']=='helper'?'':'/flat')."/".$urlArray['module']."/".$urlArray['api']."', //\t".$name."\n";
     }
 
     /**
      * 结束初始化路由
      */
     private function endIndexJs(){
-      $this->indexJsText .= "};\nexport default api\n";
+      $this->indexJsText .= "}\nexport default api\n";
       if(!file_exists($this->baseDir.'index.js')){
           file_put_contents($this->baseDir.'index.js',$this->indexJsText);
       }
