@@ -29,6 +29,9 @@ class Route
     /** @var string $serviceBaseDir 服务层的默认路径 */
     public $serviceBaseDir = './app/Service/';
 
+    /** @var string $requestBaseDir 创建路由过滤层代码 */
+    public $requestBaseDir = './app/Requests/';
+
     /**
      * 初始化目录信息
      * @param $project
@@ -39,6 +42,9 @@ class Route
         }
         if(!is_dir($this->serviceBaseDir)){
             mkdir($this->serviceBaseDir,0777);
+        }
+        if(!is_dir($this->requestBaseDir)){
+            mkdir($this->requestBaseDir,0777);
         }
         if(!is_dir($this->controllerBaseUrl.$project)){
             mkdir($this->controllerBaseUrl.$project,0777);
@@ -131,6 +137,7 @@ EOF;
         $urlArray = explode('/',$interface['request']['url']['path'][0]);
         return $urlArray;
     }
+
     /**
      * 生成单一接口的脚手架
      * @param $interface
@@ -152,13 +159,18 @@ EOF;
             }else{
                 $params = [];
             }
-            $this->addFunctionNote($params,$interface['name']);
-            $requestText = realArray($params)?"Request ".'$request':"";
+            if($method == 'get'){
+                $requestName = "Request";
+            }else{
+                $requestName = ucfirst($lowerAction)."Request";
+                $this->makeRequest($requestName,$group,$params,$interface['name']);
+            }
+            $this->addFunctionNote($params,$interface['name'],$requestName);
+            $requestText = realArray($params)?"{$requestName} ".'$request':"";
             $this->controllerText .= "\tpublic function {$lowerAction}({$requestText}){\n";
-            $arrayName = '$argument';
-            $this->addGetParam($params,$method);
+            $this->addGetParam($params);
             $dataText = '$data';
-            $paramsText = realArray($params)?"...{$arrayName}":"";
+            $paramsText = realArray($params)?($this->makeParamText($params)):"";
             $this->controllerText .= <<<EOF
         {$dataText} = {$this->thisText}{$action}Service->handle({$paramsText});
         return succ({$dataText});      
@@ -167,6 +179,20 @@ EOF;
             $this->controllerText .= "\n\n";
             $this->makeService($action,$group,$params,$interface['name']);
         }
+    }
+
+    /**
+     * 生成脚本的请求集合文本
+     * @param $params
+     * @return string
+     */
+    private function makeParamText($params){
+        $paramText = '';
+        foreach ($params as $param) {
+            $paramText .= '$'.$param['key'].',';
+        }
+        $paramText =rtrim($paramText, ',');
+        return $paramText;
     }
 
     /**
@@ -184,18 +210,15 @@ EOF;
         $content = "<?php\nnamespace App\Http\Service\\".ucfirst($group).";\n\n";
         $content .= "/**\n*{$name}\n*/\n";
         $content .= "class ".$action.'Service{'."\n";
-        $paramText = '';
         $varText = '$';
         $content .="\t/**\n";
         foreach ($params as $param){
-            $paramText .= '$'.$param['key'].',';
             $typeText = isset($param["type"])?$param["type"]:'string';
             if($typeText == 'text')$typeText = 'string';
             $content .= "\t*\t@param\t{$varText}{$param['key']}\t{$typeText}\t{$param['description']}\n";
         }
         $content .="\t* @return array\n\t*/\n";
-        $paramText =rtrim($paramText, ',');
-        $content.="\tpublic function handle(".$paramText."){\n\n\n";
+        $content.="\tpublic function handle(".($this->makeParamText($params))."){\n\n\n";
         $content.= "\t\treturn ['{$name}'];";
         $content.= "\n\t}\n";
         $content .= "}";
@@ -205,20 +228,80 @@ EOF;
     }
 
     /**
+     * 创建路由过滤层
+     * @param $requestName
+     * @param $group
+     * @param $params
+     * @param $name
+     */
+    private function makeRequest($requestName,$group,$params,$name){
+        if(!is_dir($this->requestBaseDir.$group)){
+            mkdir($this->requestBaseDir.$group,0777);
+        }
+        $fileName = $this->requestBaseDir.$group.'/'.$requestName.'.php';
+        $content = <<<EOF
+<?php
+/**
+ * {$name}
+ * Created by PhpStorm.
+ * User: wirelessCognitive
+ */
+
+EOF;
+        $content .= "namespace App\Http\Requests\\".$group.";\n";
+        $content .= <<<EOF
+use App\Http\Requests\MiaoMiRequest;
+
+class {$requestName} Extends MiaoMiRequest
+{
+    /**
+     * 是否需要用户登录
+     * @return bool
+     */
+    public function authorize(){
+        return true;
+    }
+    
+    /**
+     * 验证规则
+     * @return array
+     */
+    public function rules(){
+        return [
+
+EOF;
+        foreach ($params as $param){
+            $content .= "\t\t\t'{$param['key']}'\t=>\t'required',\t//{$param['description']}\n";
+        }
+        $content .= "\t\t];\n\t}\n\n";
+$content .= <<<EOF
+    /**
+     * 验证返回消息内容
+     * @return array
+     */
+    public function messages(){
+        return [
+        
+EOF;
+        foreach ($params as $param){
+            $content .= "\t\t\t'{$param['key']}.required'\t=>\t'需要输入{$param['description']}',\n";
+        }
+        $content .= "\t\t];\n\t}\n}\n";
+        if(!file_exists($fileName)){
+            file_put_contents($fileName,$content);
+        }
+    }
+
+    /**
      * 获取参数
      * @param $properties
-     * @param $method
      */
-    private function addGetParam($properties,$method){
-        $arrayName = '$argument';
+    private function addGetParam($properties){
         $requestText = '$request->';
-        if(realArray($properties)){
-            $this->controllerText .= "\t\t".$arrayName." = [];\n";
-        }
         foreach ($properties as $param){
             $lowerName = strtolower($param['key']);
             $paramList[] = $lowerName;
-            $this->controllerText .= "\t\t".$arrayName.'[]  = '.$requestText.'input("'.$method.'.'.$lowerName.'","");'."\n";
+            $this->controllerText .= "\t\t$".$lowerName.'  = '.$requestText.'input("'.$lowerName.'","");'."\n";
         }
     }
 
@@ -226,8 +309,9 @@ EOF;
      * 添加方法的注解
      * @param $properties array
      * @param $name string
+     * @param $requestName string 请求过滤器的名称
      */
-    private function addFunctionNote($properties,$name){
+    private function addFunctionNote($properties,$name,$requestName){
         $requestText = '$request';
         $this->controllerText .="\t/**\n\t/* {$name}\n";
         foreach ($properties as $param){
@@ -237,7 +321,7 @@ EOF;
             $this->controllerText .= "\t* {$keyName}\t{$typeName}\t{$param['description']}\n";
         }
         if(realArray($properties)){
-            $this->controllerText .="\t* @param Request {$requestText}\n\t* @return array\n\t*/\n";
+            $this->controllerText .="\t* @param {$requestName} {$requestText}\n\t* @return array\n\t*/\n";
         }else{
             $this->controllerText .="\t* @return array\n\t*/\n";
         }
@@ -312,6 +396,15 @@ EOF;
      */
     private function addControllerUser($interfaces,$group){
         $actionList = [];
+        foreach ($interfaces as $interface){
+            $method = strtolower($interface['request']["method"]);
+            if($method == 'put'){
+                $urlArray = $this->getUrlArray($interface);
+                $lowerAction = lcfirst(convertUnderline(end($urlArray)));
+                $requestName = ucfirst($lowerAction)."Request";
+                $this->controllerText .= "use App\Http\Requests\\{$group}\\{$requestName};\n";
+            }
+        }
         foreach ($interfaces as $interface){
             $urlArray = $this->getUrlArray($interface);
             $action = end($urlArray);
