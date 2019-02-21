@@ -66,7 +66,7 @@ class ApiForVue
      */
     private function createModuleJs($module){
         $this->indexJsText .= "  /**\n   *  {$module['name']}\n   */\n";
-        $this->moduleJsText = "import api from './index'\nimport { axios } from '@/utils/request'\n";
+        $this->moduleJsText = "import api from './index'\nimport { axios } from '@/utils/request'\nimport { stringify } from 'qs'\n";
         $moduleFileName = '';
         foreach ($module['item'] as $oneApi){
             if(isset($oneApi['request']) && realArray($oneApi['request'])){
@@ -140,7 +140,7 @@ class ApiForVue
             if($request['method'] == 'GET'){
                 $this->moduleJsText.="    data: parameter,\n";
             }else{
-                $this->moduleJsText.="    data: parameter\n";
+                $this->moduleJsText.="    data: stringify(parameter)\n";
             }
         }
         if($request['method'] == 'GET'){
