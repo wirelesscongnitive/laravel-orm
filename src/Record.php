@@ -64,7 +64,7 @@ class Record{
      * is_open 记录是否开启暂时用于软删除
      * open_close_time 上次开启或者关闭的时间
      */
-    public static $use_hidden_fields = false;
+    public static $use_hidden_fields = true;
 
     public function __construct()
     {
