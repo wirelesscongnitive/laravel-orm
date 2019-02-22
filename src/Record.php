@@ -100,7 +100,7 @@ class Record{
     public function __call($name,$arguments)
     {
         array_unshift($arguments,$this);
-        if($name == 'select'){
+        if($name == 'select' || $name == 'find'){
             return Select::$name(...$arguments);
         }else{
             Select::$name(...$arguments);

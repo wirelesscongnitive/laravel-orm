@@ -115,6 +115,30 @@ class Select
     }
 
     /**
+     * 查询一条数据
+     * @param $record Record
+     * @param $function string|\Closure
+     * @param bool $needReturn 是否需要删除部分冗余参数
+     * @return mixed
+     */
+    public static function find($record,$function,$needReturn = false){
+        self::initSelectObj($record);
+        $id = self::$selectObj->value('id');
+        if($function instanceof \Closure) {
+            $oneInfo = $record->get($id);
+            $function($oneInfo);
+        }else{
+            $oneInfo = $record->get($id);
+        }
+        if($needReturn)self::filterNoData($oneInfo);
+        //重置静态变量
+        self::$selectObj = null;
+        self::$needPage = false;
+        self::$recordTotal = 0;
+        return $oneInfo;
+    }
+
+    /**
      * 执行查询方法
      * @param $record Record
      * @param string|\Closure $function
