@@ -113,13 +113,9 @@ class Record{
      */
     public function update(){
         $toUpdateArray = [];
-        $toCacheArray = [];
         foreach ($this->fields as $oneFields=>$type){
             if(isset($this->$oneFields) && !empty($this->$oneFields)){
-                $toCacheArray[$oneFields] = self::handleFormat($this,$this->$oneFields,$oneFields);
-                if($oneFields != 'create_time'){
-                    $toUpdateArray[$oneFields] = $this->filterFormat($this->$oneFields,$oneFields);
-                }
+                $toUpdateArray[$oneFields] = $this->filterFormat($this->$oneFields,$oneFields);
             }
         }
         if(isset($this->id)){
@@ -128,12 +124,25 @@ class Record{
                 $toUpdateArray['update_time'] = $this->getMicroTime();
             }
             //更新数据库
-            DB::table($this->table)->where('id',$this->id)->update($toUpdateArray);
+            DB::table($this->table)->where('id',$this->id)->update($this->filterFieldsForUpdate($toUpdateArray));
             //建立id缓存
-            $this->cacheObj->addIdCache($this->id,$this->table,$toCacheArray);
+            $this->cacheObj->addIdCache($this->id,$this->table,$toUpdateArray);
         }
     }
 
+    /**
+     * 过滤掉一些编辑不需要编辑的保留字段
+     * @param $fields_array
+     */
+    private function filterFieldsForUpdate($fields_array){
+        $privateFields = ['create_time','is_open','open_close_time'];
+        foreach ($fields_array as $field=>$value){
+            if(in_array($field,$privateFields)){
+                unset($fields_array[$field]);
+            }
+        }
+        return $fields_array;
+    }
     /**
      * 对数据的格式进行过滤
      * @param $value
@@ -320,7 +329,9 @@ class Record{
                 case 'mini_time':
                     $second_time = floor($value * 0.001);
                     $mini_time = ($value - $second_time * 1000) * 0.001;
-                    return date("Y-m-d H:i:s",$second_time).substr((string)$mini_time,1);
+                    $date = date("Y-m-d H:i:s",$second_time);
+                    $miniStr = substr((string)$mini_time,1);
+                    return $date.$miniStr;
                 case 'time':
                     return date('Y-m-d H:i:s',$value);
                 case 'mini_date':
