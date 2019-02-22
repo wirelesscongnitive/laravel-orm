@@ -147,8 +147,13 @@ class Record{
                 //时间格式过滤(还原毫秒时间戳)
                 if(is_string($value)){
                     $array = explode('.',$value);
-                    $mini = end($array);
-                    $value = strtotime($value) * 1000 + $mini;
+                    if(count($array) > 1){
+                        $mini = end($array);
+                        $timeStr = end($array);
+                        $value = strtotime($timeStr) * 1000 + $mini;
+                    }else{
+                        $value = strtotime($value) * 1000;
+                    }
                 }
             }else if($format == 'time'){
                 if(is_string($value)){
@@ -165,11 +170,11 @@ class Record{
     public function insert(){
         $toInsertArray = [];
         foreach ($this->fields as $oneFields=>$type){
-            if(isset($this->$oneFields)){
-                if(empty($this->$oneFields)){
+            if(isset($this->$oneFields) && !empty($this->$oneFields)){
+                $toInsertArray[$oneFields] = $this->$oneFields;
+            }else{
+                if(!in_array($oneFields,['create_time','is_open','update_time'])){
                     $toInsertArray[$oneFields] = $this->getDefaultValue($oneFields);
-                }else{
-                    $toInsertArray[$oneFields] = $this->$oneFields;
                 }
             }
         }
