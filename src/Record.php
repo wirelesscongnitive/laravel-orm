@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
  * @method static $this timeZone(array $time_array)
  * @method static $this page(int $page,int $step)
  * @method static array select(\Closure $function = '',$needReturn = false)
+ * @method static array find(\Closure $function = '',$needReturn = false)
  * @method static $this where($column, $operator = null, $value = null, $boolean = 'and')
  * @method static $this distinct()
  * @method static $this orWhere($column, $operator = null, $value = null)
@@ -57,7 +58,6 @@ class Record{
 
     /** @var $cacheObj Cache */
     public $cacheObj;
-
     /**
      * @var bool $user_hiddle_fields 是否使用隐藏字段
      * 隐藏字段包含
