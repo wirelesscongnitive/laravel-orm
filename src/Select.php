@@ -121,7 +121,7 @@ class Select
      * @param bool $needReturn 是否需要删除部分冗余参数
      * @return mixed
      */
-    public static function find($record,$function,$needReturn = false){
+    public static function find($record,$function = '',$needReturn = false){
         self::initSelectObj($record);
         $id = self::$selectObj->value('id');
         if($function instanceof \Closure) {
