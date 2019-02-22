@@ -124,18 +124,22 @@ class Select
     public static function find($record,$function = '',$needReturn = false){
         self::initSelectObj($record);
         $id = self::$selectObj->value('id');
-        if($function instanceof \Closure) {
-            $oneInfo = $record->get($id);
-            $function($oneInfo);
+        if($id){
+            if($function instanceof \Closure) {
+                $oneInfo = $record->get($id);
+                $function($oneInfo);
+            }else{
+                $oneInfo = $record->get($id);
+            }
+            if($needReturn)self::filterNoData($oneInfo);
+            //重置静态变量
+            self::$selectObj = null;
+            self::$needPage = false;
+            self::$recordTotal = 0;
+            return $oneInfo;
         }else{
-            $oneInfo = $record->get($id);
+            return false;
         }
-        if($needReturn)self::filterNoData($oneInfo);
-        //重置静态变量
-        self::$selectObj = null;
-        self::$needPage = false;
-        self::$recordTotal = 0;
-        return $oneInfo;
     }
 
     /**
@@ -156,6 +160,7 @@ class Select
         if(is_array($ids) && count($ids) > 0){
             foreach ($ids as $id){
                 if($function instanceof \Closure) {
+                    /** @var Record $oneInfo */
                     $oneInfo = $record->get($id);
                     $function($oneInfo);
                 }else{

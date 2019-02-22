@@ -113,9 +113,13 @@ class Record{
      */
     public function update(){
         $toUpdateArray = [];
+        $toCacheArray = [];
         foreach ($this->fields as $oneFields=>$type){
             if(isset($this->$oneFields) && !empty($this->$oneFields)){
-                $toUpdateArray[$oneFields] = $this->$oneFields;
+                $toCacheArray[$oneFields] = self::handleFormat($this,$this->$oneFields,$oneFields);
+                if($oneFields != 'create_time'){
+                    $toUpdateArray[$oneFields] = $this->filterFormat($this->$oneFields,$oneFields);
+                }
             }
         }
         if(isset($this->id)){
@@ -126,9 +130,35 @@ class Record{
             //更新数据库
             DB::table($this->table)->where('id',$this->id)->update($toUpdateArray);
             //建立id缓存
-            $this->cacheObj->addIdCache($this->id,$this->table,$toUpdateArray);
+            $this->cacheObj->addIdCache($this->id,$this->table,$toCacheArray);
         }
     }
+
+    /**
+     * 对数据的格式进行过滤
+     * @param $value
+     * @param $field
+     * @return mixed
+     */
+    private function filterFormat($value,$field){
+        if(isset($this->fields[$field])){
+            $format = $this->fields[$field];
+            if($format == 'mini_time'){
+                //时间格式过滤(还原毫秒时间戳)
+                if(is_string($value)){
+                    $array = explode('.',$value);
+                    $mini = end($array);
+                    $value = strtotime($value) * 1000 + $mini;
+                }
+            }else if($format == 'time'){
+                if(is_string($value)){
+                    $value = strtotime($value);
+                }
+            }
+        }
+        return $value;
+    }
+
     /**
      * 数据信息插入方法
      */
@@ -136,7 +166,11 @@ class Record{
         $toInsertArray = [];
         foreach ($this->fields as $oneFields=>$type){
             if(isset($this->$oneFields)){
-                $toInsertArray[$oneFields] = $this->$oneFields;
+                if(empty($this->$oneFields)){
+                    $toInsertArray[$oneFields] = $this->getDefaultValue($oneFields);
+                }else{
+                    $toInsertArray[$oneFields] = $this->$oneFields;
+                }
             }
         }
         //隐藏字段拼接
@@ -150,6 +184,31 @@ class Record{
         $this->cacheObj->addIdCache($id,$this->table,$toInsertArray);
         //返回索引
         return $id;
+    }
+
+    /**
+     * 获取字段的默认值
+     * @param $field
+     * @return int|string
+     */
+    private function getDefaultValue($field){
+        if(isset($this->fields[$field])){
+            $type = $this->fields[$field];
+            switch ($type){
+                case 'mini_time':
+                case 'time':
+                case 'mini_date':
+                case 'date':
+                case 'int':
+                case 'float':
+                    return 0;
+                case 'string':
+                default:
+                    return '';
+            }
+        }else{
+            return '';
+        }
     }
 
     /**
