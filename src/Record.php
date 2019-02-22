@@ -158,7 +158,7 @@ class Record{
                     $array = explode('.',$value);
                     if(count($array) > 1){
                         $mini = end($array);
-                        $timeStr = end($array);
+                        $timeStr = $value;
                         $value = strtotime($timeStr) * 1000 + $mini;
                     }else{
                         $value = strtotime($value) * 1000;
