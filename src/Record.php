@@ -53,6 +53,9 @@ class Record{
     /** @var $nowRecord Record 当前的record表对象 */
     public $nowRecord;
 
+    /** @var $enableCache bool 是否需要ID缓存 */
+    public static $enableCache = true;
+
     /** @var $table_name string 当前的数据表名称 */
     public $table_name;
 
@@ -125,14 +128,17 @@ class Record{
             }
             //更新数据库
             DB::table($this->table)->where('id',$this->id)->update($this->filterFieldsForUpdate($toUpdateArray));
-            //建立id缓存
-            $this->cacheObj->addIdCache($this->id,$this->table,$toUpdateArray);
+            if(self::$enableCache){
+                //建立id缓存
+                $this->cacheObj->addIdCache($this->id,$this->table,$toUpdateArray);
+            }
         }
     }
 
     /**
      * 过滤掉一些编辑不需要编辑的保留字段
      * @param $fields_array
+     * @return mixed
      */
     private function filterFieldsForUpdate($fields_array){
         $privateFields = ['create_time','is_open','open_close_time'];
@@ -194,8 +200,10 @@ class Record{
         }
         //存入数据库
         $id = DB::table($this->table)->insertGetId($toInsertArray);
-        //建立id缓存
-        $this->cacheObj->addIdCache($id,$this->table,$toInsertArray);
+        if(self::$enableCache){
+            //建立id缓存
+            $this->cacheObj->addIdCache($id,$this->table,$toInsertArray);
+        }
         //返回索引
         return $id;
     }
@@ -252,9 +260,11 @@ class Record{
             //进行数据库的硬性删除
             DB::table($table)->where('id',$id)->delete();
         }
-        //对id缓存进行清空
-        $cacheObj = new Cache();
-        $cacheObj->deleteIdCache($id,$table);
+        if(self::$enableCache){
+            //对id缓存进行清空
+            $cacheObj = new Cache();
+            $cacheObj->deleteIdCache($id,$table);
+        }
     }
 
     /**
@@ -293,7 +303,11 @@ class Record{
         $model = new $model;
         $table = $model->table;
         $cacheObj = new Cache();
-        $data = $cacheObj->get($id,$table);
+        if(self::$enableCache){
+            $data = $cacheObj->get($id,$table);
+        }else{
+            $data = false;
+        }
         if(!is_array($data)){
             if(self::$use_hidden_fields){
                 $data = DB::table($table)->where('id',$id)->where('is_open',1)->first();
@@ -301,7 +315,9 @@ class Record{
                 $data = DB::table($table)->where('id',$id)->first();
             }
             self::filterHiddenFields($data);
-            $cacheObj->addIdCache($id,$table,$data);
+            if(self::$enableCache){
+                $cacheObj->addIdCache($id,$table,$data);
+            }
         }
         if(is_array($data) || is_object($data)){
             foreach ($data as $field=>$value){

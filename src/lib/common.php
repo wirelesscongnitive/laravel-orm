@@ -26,6 +26,13 @@ if(!function_exists('succ')){
      * @return array
      */
     function succ($data = false){
+        if($data instanceof \WirelessCognitive\LaravelOrm\Record){
+            if(isset($data->table))unset($data->table);
+            if(isset($data->fields))unset($data->fields);
+            if(isset($data->table_name))unset($data->table_name);
+            if(isset($data->nowRecord))unset($data->nowRecord);
+            if(isset($data->cacheObj))unset($data->cacheObj);
+        }
         $info = [
             'success'=>true,
             'code'=>200,
