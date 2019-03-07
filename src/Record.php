@@ -318,9 +318,11 @@ class Record{
             }else{
                 $data = DB::table($table)->where('id',$id)->first();
             }
-            self::filterHiddenFields($data);
-            if(self::$enableCache){
-                $cacheObj->addIdCache($id,$table,$data);
+            if(is_array($data) || is_object($data)) {
+                self::filterHiddenFields($data);
+                if (self::$enableCache) {
+                    $cacheObj->addIdCache($id, $table, $data);
+                }
             }
         }
         if(is_array($data) || is_object($data)){
