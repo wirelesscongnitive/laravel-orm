@@ -7,5 +7,4 @@ require  "./vendor/autoload.php";
  * Time: 13:17
  */
 $routeMake = new \WirelessCognitive\LaravelOrm\Route();
-$vueRoute = new \WirelessCognitive\LaravelOrm\ApiForVue();
-$vueRoute->make();
+$routeMake->makeRoute();

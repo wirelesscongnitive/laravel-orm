@@ -295,9 +295,10 @@ class Record{
     /**
      * 根据主键获取对象
      * @param $id
-     * @return $this
+     * @param $realData bool 是否只要数据不要结构类
+     * @return $this|array
      */
-    public static function get($id){
+    public static function get($id,$realData = false){
         $model = get_called_class();
         /* @var $model Record */
         $model = new $model;
@@ -331,7 +332,18 @@ class Record{
                     $model->$field = self::handleFormat($model,$field,$value);
                 }
             }
-            return $model;
+            if($realData){
+                $protectFields = ['table','fields','table_name','nowRecord','cacheObj'];
+                $tempData = [];
+                foreach ($model as $field=>$value){
+                    if(!in_array($field,$protectFields)){
+                        $tempData[$field] = $value;
+                    }
+                }
+                return $tempData;
+            }else{
+                return $model;
+            }
         }else{
             return null;
         }
