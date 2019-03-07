@@ -152,7 +152,7 @@ class Select
     public static function select($record,$function = '',$needReturn = false){
         self::initSelectObj($record);
         //开启了软删除的模式下 需要默认查询尚未被删除的数据
-        if($record::$use_hidden_fields){
+        if($record::$use_hidden_fields && isset($record->fields) && in_array('is_open',$record->fields)){
             self::$selectObj->where('is_open',1);
         }
         $list = $data = [];
