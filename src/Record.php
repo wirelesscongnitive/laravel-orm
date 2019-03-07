@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
  * @method static $this keyword(array $fields,string $keywords)
  * @method static $this timeZone(array $time_array)
  * @method static $this page(int $page,int $step)
- * @method static array select(\Closure $function = '',$needReturn = false)
+ * @method static array select($needReturn = false,\Closure $function = '')
  * @method static array find(\Closure $function = '',$needReturn = false)
  * @method static $this where($column, $operator = null, $value = null, $boolean = 'and')
  * @method static $this distinct()

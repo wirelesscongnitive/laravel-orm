@@ -149,7 +149,7 @@ class Select
      * @param bool $needReturn 是否需要删除部分冗余参数
      * @return array
      */
-    public static function select($record,$function = '',$needReturn = false){
+    public static function select($record,$needReturn = false,$function = ''){
         self::initSelectObj($record);
         //开启了软删除的模式下 需要默认查询尚未被删除的数据
         if($record::$use_hidden_fields && isset($record->fields) && in_array('is_open',$record->fields)){
