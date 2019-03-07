@@ -27,11 +27,14 @@ if(!function_exists('succ')){
      */
     function succ($data = false){
         if($data instanceof \WirelessCognitive\LaravelOrm\Record){
-            if(isset($data->table))unset($data->table);
-            if(isset($data->fields))unset($data->fields);
-            if(isset($data->table_name))unset($data->table_name);
-            if(isset($data->nowRecord))unset($data->nowRecord);
-            if(isset($data->cacheObj))unset($data->cacheObj);
+            $protectFields = ['table','fields','table_name','nowRecord','cacheObj'];
+            $tempData = [];
+            foreach ($data as $field=>$value){
+                if(!in_array($field,$protectFields)){
+                    $tempData[$field] = $value;
+                }
+            }
+            $data = $tempData;
         }
         $info = [
             'success'=>true,
