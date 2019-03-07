@@ -310,7 +310,11 @@ class Record{
         }
         if(!is_array($data)){
             if(self::$use_hidden_fields){
-                $data = DB::table($table)->where('id',$id)->where('is_open',1)->first();
+                if(isset($model->fields['is_open'])){
+                    $data = DB::table($table)->where('id',$id)->where('is_open',1)->first();
+                }else{
+                    $data = DB::table($table)->where('id',$id)->first();
+                }
             }else{
                 $data = DB::table($table)->where('id',$id)->first();
             }
