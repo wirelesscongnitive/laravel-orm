@@ -118,6 +118,8 @@ EOF;
             }
         }else if(in_array($data_type,$intType)){
             return 'int';
+        }else if ($fields_name == 'pic'){
+            return 'pic';
         }
         return $data_type;
     }

@@ -365,10 +365,8 @@ class Record{
             switch ($type){
                 case 'mini_time':
                     $second_time = floor($value * 0.001);
-                    $mini_time = ($value - $second_time * 1000) * 0.001;
                     $date = date("Y-m-d H:i:s",$second_time);
-                    $miniStr = substr((string)$mini_time,1);
-                    return $date.$miniStr;
+                    return $date;
                 case 'time':
                     return date('Y-m-d H:i:s',$value);
                 case 'mini_date':
@@ -382,11 +380,23 @@ class Record{
                     return (string)$value;
                 case 'float':
                     return (float)$value;
+                case 'pic':
+                    return self::picFormat($value);
                 default:
                     return $value;
             }
         }else{
             return $value;
         }
+    }
+
+    /**
+     * 拼接图片类型的数据
+     * @param $value
+     * @return string
+     */
+    private static function picFormat($value){
+        $config_url = config('outer.obs.file_url');
+        return $config_url.$value;
     }
 }
