@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\DB;
 
 class Select
 {
+    /** @var string $now_table_name 当前占用对象的表名称 */
+    public static $now_table_name = '';
+
     /** @var $selectObj Builder 当前的查询对象 */
     public static $selectObj;
 
@@ -47,6 +50,7 @@ class Select
      * 调用builder类的基础方法
      * @param $name
      * @param $arguments
+     * @return mixed|void
      */
     public static function __callStatic($name,$arguments)
     {
@@ -55,7 +59,11 @@ class Select
         if(in_array($name,['forPageAfterId'])){
             self::$needPage = true;
         }
-        self::$selectObj->$name(...$arguments);
+        if(in_array($name,['count'])){
+            return self::$selectObj->$name(...$arguments);
+        }else{
+            self::$selectObj->$name(...$arguments);
+        }
     }
 
     /**
@@ -63,9 +71,10 @@ class Select
      * @param $record Record 当前的查询模型
      */
     private static function initSelectObj($record){
-        if(!self::$selectObj instanceof Builder){
+        if(!self::$selectObj instanceof Builder || $record->table != self::$now_table_name){
             self::$selectObj = DB::table($record->table);
             self::$fields = $record->fields;
+            self::$now_table_name = $record->table;
         }
     }
 
