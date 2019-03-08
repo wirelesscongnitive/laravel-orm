@@ -397,6 +397,6 @@ class Record{
      */
     private static function picFormat($value){
         $config_url = config('outer.obs.file_url');
-        return $config_url.$value;
+        return $config_url.'/'.$value;
     }
 }
