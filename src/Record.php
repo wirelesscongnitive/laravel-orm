@@ -149,6 +149,7 @@ class Record{
         }
         return $fields_array;
     }
+
     /**
      * 对数据的格式进行过滤
      * @param $value
@@ -174,6 +175,11 @@ class Record{
                 if(is_string($value)){
                     $value = strtotime($value);
                 }
+            }else if($format == 'pic'){
+                $obs_url = config('outer.obs.file_url').'/';
+                if(strpos($value,$obs_url) > -1){
+                    $value = str_replace($obs_url,'',$value);
+                }
             }
         }
         return $value;
@@ -188,13 +194,6 @@ class Record{
         foreach ($this->fields as $oneFields=>$type){
             if(isset($this->$oneFields) && !empty($this->$oneFields)){
                 $toInsertArray[$oneFields] = $this->$oneFields;
-            }else if($type == 'pic'){
-                $obs_url = config('outer.obs.file_url').'/';
-                if(strpos($obs_url,$this->$oneFields) > -1){
-                    $toInsertArray[$oneFields] = str_replace($obs_url,'',$this->$oneFields);
-                }else{
-                    $toInsertArray[$oneFields] = $this->$oneFields;
-                }
             }else{
                 if(!in_array($oneFields,['create_time','is_open','update_time'])){
                     $toInsertArray[$oneFields] = $this->getDefaultValue($oneFields);
