@@ -172,7 +172,7 @@ EOF;
             $dataText = '$data';
             $paramsText = realArray($params)?($this->makeParamText($params)):"";
             $this->controllerText .= <<<EOF
-        {$dataText} = {$this->thisText}{$action}Service->handle({$paramsText});
+        {$dataText} = (new {$action}Service())->handle({$paramsText});
         return succ({$dataText});      
     }
 EOF;
@@ -341,7 +341,6 @@ EOF;
 class {$group}Controller extends Controller{
 
 EOF;
-            $this->addControllerInit($actionList);
             $this->pushToRoute(2,"/**".$module['name']."*/");
             $this->pushToRoute(2,"Route::prefix('".strtolower($group)."')->group(function(){");
             foreach ($module['item'] as $interface){
@@ -352,40 +351,6 @@ EOF;
             file_put_contents($this->projectControllerUrl.$group."Controller.php",$this->controllerText);
             $this->controllerText = '';
         }
-    }
-
-    /**
-     * 添加控制器的初始化方法
-     * @param $actionList
-     */
-    private function addControllerInit($actionList){
-        foreach ($actionList as $action){
-            $serviceName = $action."Service";
-            $serviceNameVar = "$".$serviceName;
-            $this->controllerText .=<<<EOF
-/** @var {$serviceNameVar} {$serviceName} */
-    private {$serviceNameVar};
-    
-EOF;
-        }
-        $this->controllerText .=<<<EOF
-        
-    public function __construct()
-    {
-    
-EOF;
-        foreach ($actionList as $action){
-            $serviceName =  $action."Service";
-            $this->controllerText .=<<<EOF
-    {$this->thisText}{$serviceName} = new {$serviceName}();
-    
-EOF;
-        }
-        $this->controllerText .=<<<EOF
- }
-     
-     
-EOF;
     }
 
     /**
