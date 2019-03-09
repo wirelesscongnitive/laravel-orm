@@ -335,7 +335,7 @@ EOF;
         if(isset($module['item']) && realArray($module['item'])){
             list($project,$group) = $this->getProjectGroup($module['item'][0]);
             $this->controllerText = '<?php'."\n".'namespace App\Http\Controllers\\'.$project.";\n\nuse Illuminate\Http\Request;\nuse App\Http\Controllers\Controller;\n";
-            $actionList = $this->addControllerUser($module['item'],$group);
+            $this->addControllerUser($module['item'],$group);
             $this->controllerText .=<<<EOF
             
 class {$group}Controller extends Controller{
