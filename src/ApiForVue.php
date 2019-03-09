@@ -138,7 +138,7 @@ class ApiForVue
         $this->moduleJsText.="    method: '".strtolower($request['method'])."'{$comma}\n";
         if(realArray($params)){
             if($request['method'] == 'GET'){
-                $this->moduleJsText.="    data: parameter,\n";
+                $this->moduleJsText.="    params: parameter,\n";
             }else{
                 $this->moduleJsText.="    data: stringify(parameter)\n";
             }

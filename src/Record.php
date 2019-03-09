@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
  * @method static $this keyword(array $fields,string $keywords)
  * @method static $this timeZone(array $time_array)
  * @method static $this page(int $page,int $step)
- * @method static array select(\Closure $function = '',$needReturn = false)
+ * @method static array select($needReturn = false,\Closure $function = '')
  * @method static array find(\Closure $function = '',$needReturn = false)
  * @method static $this where($column, $operator = null, $value = null, $boolean = 'and')
  * @method static $this distinct()
@@ -52,6 +52,9 @@ class Record{
 
     /** @var $nowRecord Record 当前的record表对象 */
     public $nowRecord;
+
+    /** @var $enableCache bool 是否需要ID缓存 */
+    public static $enableCache = true;
 
     /** @var $table_name string 当前的数据表名称 */
     public $table_name;
@@ -100,7 +103,7 @@ class Record{
     public function __call($name,$arguments)
     {
         array_unshift($arguments,$this);
-        if($name == 'select' || $name == 'find'){
+        if($name == 'select' || $name == 'find' || $name == 'count'){
             return Select::$name(...$arguments);
         }else{
             Select::$name(...$arguments);
@@ -125,14 +128,17 @@ class Record{
             }
             //更新数据库
             DB::table($this->table)->where('id',$this->id)->update($this->filterFieldsForUpdate($toUpdateArray));
-            //建立id缓存
-            $this->cacheObj->addIdCache($this->id,$this->table,$toUpdateArray);
+            if(self::$enableCache){
+                //建立id缓存
+                $this->cacheObj->addIdCache($this->id,$this->table,$toUpdateArray);
+            }
         }
     }
 
     /**
      * 过滤掉一些编辑不需要编辑的保留字段
      * @param $fields_array
+     * @return mixed
      */
     private function filterFieldsForUpdate($fields_array){
         $privateFields = ['create_time','is_open','open_close_time'];
@@ -143,6 +149,7 @@ class Record{
         }
         return $fields_array;
     }
+
     /**
      * 对数据的格式进行过滤
      * @param $value
@@ -168,6 +175,11 @@ class Record{
                 if(is_string($value)){
                     $value = strtotime($value);
                 }
+            }else if($format == 'pic'){
+                $obs_url = config('outer.obs.file_url').'/';
+                if(strpos($value,$obs_url) > -1){
+                    $value = str_replace($obs_url,'',$value);
+                }
             }
         }
         return $value;
@@ -175,6 +187,7 @@ class Record{
 
     /**
      * 数据信息插入方法
+     * @return int
      */
     public function insert(){
         $toInsertArray = [];
@@ -194,8 +207,10 @@ class Record{
         }
         //存入数据库
         $id = DB::table($this->table)->insertGetId($toInsertArray);
-        //建立id缓存
-        $this->cacheObj->addIdCache($id,$this->table,$toInsertArray);
+        if(self::$enableCache){
+            //建立id缓存
+            $this->cacheObj->addIdCache($id,$this->table,$toInsertArray);
+        }
         //返回索引
         return $id;
     }
@@ -252,9 +267,11 @@ class Record{
             //进行数据库的硬性删除
             DB::table($table)->where('id',$id)->delete();
         }
-        //对id缓存进行清空
-        $cacheObj = new Cache();
-        $cacheObj->deleteIdCache($id,$table);
+        if(self::$enableCache){
+            //对id缓存进行清空
+            $cacheObj = new Cache();
+            $cacheObj->deleteIdCache($id,$table);
+        }
     }
 
     /**
@@ -285,7 +302,7 @@ class Record{
     /**
      * 根据主键获取对象
      * @param $id
-     * @return $this
+     * @return $this|array
      */
     public static function get($id){
         $model = get_called_class();
@@ -293,15 +310,27 @@ class Record{
         $model = new $model;
         $table = $model->table;
         $cacheObj = new Cache();
-        $data = $cacheObj->get($id,$table);
+        if(self::$enableCache){
+            $data = $cacheObj->get($id,$table);
+        }else{
+            $data = false;
+        }
         if(!is_array($data)){
             if(self::$use_hidden_fields){
-                $data = DB::table($table)->where('id',$id)->where('is_open',1)->first();
+                if(isset($model->fields['is_open'])){
+                    $data = DB::table($table)->where('id',$id)->where('is_open',1)->first();
+                }else{
+                    $data = DB::table($table)->where('id',$id)->first();
+                }
             }else{
                 $data = DB::table($table)->where('id',$id)->first();
             }
-            self::filterHiddenFields($data);
-            $cacheObj->addIdCache($id,$table,$data);
+            if(is_array($data) || is_object($data)) {
+                self::filterHiddenFields($data);
+                if (self::$enableCache) {
+                    $cacheObj->addIdCache($id, $table, $data);
+                }
+            }
         }
         if(is_array($data) || is_object($data)){
             foreach ($data as $field=>$value){
@@ -313,6 +342,21 @@ class Record{
         }else{
             return null;
         }
+    }
+
+    /**
+     * 获取当前对象参数的数组形式
+     * @return array
+     */
+    public function toArray(){
+        $protectFields = ['table','fields','table_name','nowRecord','cacheObj'];
+        $tempData = [];
+        foreach ($this as $field=>$value){
+            if(!in_array($field,$protectFields)){
+                $tempData[$field] = $value;
+            }
+        }
+        return $tempData;
     }
 
     /**
@@ -328,10 +372,8 @@ class Record{
             switch ($type){
                 case 'mini_time':
                     $second_time = floor($value * 0.001);
-                    $mini_time = ($value - $second_time * 1000) * 0.001;
                     $date = date("Y-m-d H:i:s",$second_time);
-                    $miniStr = substr((string)$mini_time,1);
-                    return $date.$miniStr;
+                    return $date;
                 case 'time':
                     return date('Y-m-d H:i:s',$value);
                 case 'mini_date':
@@ -345,11 +387,23 @@ class Record{
                     return (string)$value;
                 case 'float':
                     return (float)$value;
+                case 'pic':
+                    return self::picFormat($value);
                 default:
                     return $value;
             }
         }else{
             return $value;
         }
+    }
+
+    /**
+     * 拼接图片类型的数据
+     * @param $value
+     * @return string
+     */
+    private static function picFormat($value){
+        $config_url = config('outer.obs.file_url');
+        return $config_url.'/'.$value;
     }
 }

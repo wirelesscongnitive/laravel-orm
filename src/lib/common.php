@@ -26,6 +26,16 @@ if(!function_exists('succ')){
      * @return array
      */
     function succ($data = false){
+        if($data instanceof \WirelessCognitive\LaravelOrm\Record){
+            $protectFields = ['table','fields','table_name','nowRecord','cacheObj'];
+            $tempData = [];
+            foreach ($data as $field=>$value){
+                if(!in_array($field,$protectFields)){
+                    $tempData[$field] = $value;
+                }
+            }
+            $data = $tempData;
+        }
         $info = [
             'success'=>true,
             'code'=>200,
