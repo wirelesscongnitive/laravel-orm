@@ -47,35 +47,55 @@ class Select
     }
 
     /**
-     * 调用builder类的基础方法
-     * @param $name
-     * @param $arguments
-     * @return mixed|void
+     * 关键词信息查询
+     * @param $record Record
+     * @param $fields
+     * @param $keywords
+     * @return Record
      */
-    public static function __callStatic($name,$arguments)
-    {
-        $record = array_shift($arguments);
+    public static function keyword($record,$fields,$keywords){
         self::initSelectObj($record);
-        if(in_array($name,['forPageAfterId'])){
-            self::$needPage = true;
+        if(is_array($fields) && count($fields) > 0 && !empty($keywords)){
+            foreach ($fields as $field){
+                self::$selectObj->where($field,"like","%".$keywords."%");
+            }
         }
-        if(in_array($name,['count'])){
-            return self::$selectObj->$name(...$arguments);
-        }else{
-            self::$selectObj->$name(...$arguments);
-        }
+        return $record;
     }
 
     /**
-     * 初始化查询的主对象
-     * @param $record Record 当前的查询模型
+     * 时间条件查询
+     * @param $record
+     * @param $params array
+     * @return Record
      */
-    private static function initSelectObj($record){
-        if(!self::$selectObj instanceof Builder || $record->table != self::$now_table_name){
-            self::$selectObj = DB::table($record->table);
-            self::$fields = $record->fields;
-            self::$now_table_name = $record->table;
+    public static function timeZone($record,$params){
+        self::initSelectObj($record);
+        if(realArray($params)){
+            foreach ($params as $field=>$array){
+                foreach ($array as &$single_data){
+                    $single_data = strtotime($single_data);
+                }
+                self::$selectObj->whereBetween($field,$array);
+            }
         }
+        return $record;
+    }
+
+    /**
+     * 界限条件查询
+     * @param $record Record
+     * @param $params
+     * @return Record
+     */
+    public static function fromTo($record,$params){
+        self::initSelectObj($record);
+        if(realArray($params)){
+            foreach ($params as $field=>$array){
+                self::$selectObj->whereBetween($field,$array);
+            }
+        }
+        return $record;
     }
 
     /**
@@ -94,6 +114,34 @@ class Select
             }
         }
         return $record;
+    }
+
+    /**
+     * 调用builder类的基础方法
+     * @param $name
+     * @param $arguments
+     * @return mixed
+     */
+    public static function __callStatic($name,$arguments)
+    {
+        $record = array_shift($arguments);
+        self::initSelectObj($record);
+        if(in_array($name,['forPageAfterId'])){
+            self::$needPage = true;
+        }
+        return self::$selectObj->$name(...$arguments);
+    }
+
+    /**
+     * 初始化查询的主对象
+     * @param $record Record 当前的查询模型
+     */
+    private static function initSelectObj($record){
+        if(!self::$selectObj instanceof Builder || $record->table != self::$now_table_name){
+            self::$selectObj = DB::table($record->table);
+            self::$fields = $record->fields;
+            self::$now_table_name = $record->table;
+        }
     }
 
     /**
