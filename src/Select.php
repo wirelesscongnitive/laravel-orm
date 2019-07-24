@@ -161,10 +161,10 @@ class Select
     /**
      * 分页查询参数
      * @param $record
-     * @param $page
-     * @param $step
+     * @param $page int
+     * @param $step int
      */
-    public static function page($record,$page,$step){
+    public static function page($record,$page=1,$step=10){
         self::initSelectObj($record);
         self::$recordTotal = self::$selectObj->count();
         self::$selectObj->offset($page * $step - $step)->limit($step);
