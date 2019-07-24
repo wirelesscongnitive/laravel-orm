@@ -18,14 +18,29 @@ class Seed{
     private $hiddenFields = ['open_id','open_close_time'];
 
     /** @var $objectsDir string 目标文件夹 */
-    private $objectsDir = "../app/Http/Record/";
+    private $objectsDir = "./app/Record/";
 
     /**
      * 创建record的入口方法
      */
     public function make(){
         set_time_limit(0);
-        $mysqlConfig = config('database.connections.mysql');
+//        $mysqlConfig = config('database.connections.mysql');
+        $mysqlConfig = [
+            'driver' => 'mysql',
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '3306'),
+            'database' => env('DB_DATABASE', 'fall'),
+            'username' => env('DB_USERNAME', 'root'),
+            'password' => env('DB_PASSWORD', 'root'),
+            'unix_socket' => env('DB_SOCKET', ''),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+        ];
         $this->connection = new PDO('mysql:host='.$mysqlConfig['host'].';dbname=information_schema',
             $mysqlConfig['username'], $mysqlConfig['password'],[PDO::ATTR_PERSISTENT => true]);
         $sql = "select * from `tables` where `TABLE_SCHEMA`='{$mysqlConfig['database']}'";

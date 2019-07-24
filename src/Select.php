@@ -213,7 +213,11 @@ class Select
             self::$selectObj->where('is_open',1);
         }
         $list = $data = [];
-        $ids = self::$selectObj->pluck('id')->toArray();
+        if(self::$needPage && self::$recordTotal == 0){
+            $ids = [];
+        }else{
+            $ids = self::$selectObj->pluck('id')->toArray();
+        }
         if(is_array($ids) && count($ids) > 0){
             foreach ($ids as $id){
                 if($function instanceof \Closure) {

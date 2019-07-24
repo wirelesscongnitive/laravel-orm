@@ -37,11 +37,11 @@ use Illuminate\Support\Facades\DB;
  * @method static $this limit($value)
  * @method Static $this forPageAfterId($perPage = 15, $lastId = 0, $column = 'id')
  * @method static $this toSql()
- * @method static $this count($columns = '*')
- * @method static $this min($column)
- * @method static $this max($column)
- * @method static $this sum($column)
- * @method static $this average($column)
+ * @method static int count($columns = '*')
+ * @method static float min($column)
+ * @method static float max($column)
+ * @method static int sum($column)
+ * @method static float average($column)
  */
 class Record{
     /** @var $table string 表名称 */
@@ -67,7 +67,7 @@ class Record{
      * is_open 记录是否开启暂时用于软删除
      * open_close_time 上次开启或者关闭的时间
      */
-    public static $use_hidden_fields = true;
+    public static $use_hidden_fields = false;
 
     public function __construct()
     {
