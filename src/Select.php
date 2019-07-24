@@ -141,7 +141,12 @@ class Select
         if(in_array($name,['forPageAfterId'])){
             self::$needPage = true;
         }
-        return self::$selectObj->$name(...$arguments);
+        $toReturn = self::$selectObj->$name(...$arguments);
+        $needToResetStatic = ["count"];
+        if(in_array($name,$needToResetStatic)){
+            self::resetStaticVar();// 重置静态变量
+        }
+        return $toReturn;
     }
 
     /**
@@ -205,10 +210,7 @@ class Select
                 $oneInfo = $record->get($id);
             }
             if($needReturn)self::filterNoData($oneInfo);
-            //重置静态变量
-            self::$selectObj = null;
-            self::$needPage = false;
-            self::$recordTotal = 0;
+            self::resetStaticVar();//重置静态变量
             return $oneInfo;
         }else{
             return false;
@@ -254,13 +256,18 @@ class Select
             $data = $list;
         }
         //重置静态变量
+        self::resetStaticVar();
+        return $data;
+    }
+    /**
+     * 重置静态变量
+     */
+    private static function resetStaticVar(){
         self::$selectObj = null;
         self::$needPage = false;
         self::$recordTotal = 0;
-        return $data;
     }
-
-    /**
+        /**
      * 删除不必要的冗余参数
      * @param $oneInfo
      */
