@@ -56,9 +56,11 @@ class Select
     public static function keyword($record,$fields,$keywords){
         self::initSelectObj($record);
         if(is_array($fields) && count($fields) > 0 && !empty($keywords)){
-            foreach ($fields as $field){
-                self::$selectObj->where($field,"like","%".$keywords."%");
-            }
+            self::$selectObj->where(function(Builder $query) use ($fields, $keywords){
+                foreach ($fields as $key=>$field){
+                    $query->orWhere($field,"like","%".$keywords."%");
+                }
+            });
         }
         return $record;
     }
