@@ -75,10 +75,20 @@ class Select
         self::initSelectObj($record);
         if(realArray($params)){
             foreach ($params as $field=>$array){
-                foreach ($array as &$single_data){
-                    $single_data = strtotime($single_data);
+                if(count($array) == 2){
+                    foreach ($array as &$single_data){
+                        if(!is_numeric($single_data) && is_string($single_data)){
+                            $single_data = strtotime($single_data);
+                        }
+                    }
+                    if($array[0] > 0 && $array[1] > 0){
+                        self::$selectObj->whereBetween($field,$array);
+                    }else if($array[0] > 0){
+                        self::$selectObj->where($field,">", $array[0]);
+                    }else if($array[1] > 0){
+                        self::$selectObj->where($field,"<", $array[1]);
+                    }
                 }
-                self::$selectObj->whereBetween($field,$array);
             }
         }
         return $record;
