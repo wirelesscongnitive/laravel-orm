@@ -167,7 +167,11 @@ class Select
     public static function page($record,$page=1,$step=10){
         self::initSelectObj($record);
         self::$recordTotal = self::$selectObj->count();
-        self::$selectObj->offset($page * $step - $step)->limit($step);
+        if($page * $step - $step > 0){
+            self::$selectObj->offset($page * $step - $step)->limit($step);
+        }else{
+            self::$selectObj->limit($step);
+        }
         self::$needPage = true;
     }
 
