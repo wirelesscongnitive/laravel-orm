@@ -182,6 +182,8 @@ class Select
      * @param $step int
      */
     public static function page($record,$page=1,$step=10){
+        if(intval($page) == 0)$page = 1;
+        if(intval($step) == 0)$step = 10;
         self::initSelectObj($record);
         self::$recordTotal = self::$selectObj->count();
         if($page * $step - $step > 0){
