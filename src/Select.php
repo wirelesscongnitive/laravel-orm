@@ -227,6 +227,9 @@ class Select
      * @return array
      */
     public static function select($record,$needReturn = false,$function = ''){
+        // 防止后续使用同名静态变量造成数据复写暂时放到该函数的调用栈当中等后续弹出直接执行原有结果
+        $needPage = self::$needPage;
+        $recordTotal = self::$recordTotal;
         self::initSelectObj($record);
         //开启了软删除的模式下 需要默认查询尚未被删除的数据
         if($record::$use_hidden_fields && isset($record->fields) && in_array('is_open',$record->fields)){
@@ -251,8 +254,8 @@ class Select
                 $list[] = $oneInfo;
             }
         }
-        if(self::$needPage){
-            $total = self::$recordTotal;
+        if($needPage){
+            $total = $recordTotal;
             $data = compact('list','total');
         }else{
             $data = $list;
