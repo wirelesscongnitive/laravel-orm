@@ -50,6 +50,9 @@ class Record{
     /** @var $fields array 字段名称数组 */
     public $fields = [];
 
+    /** @var $id int 数据记录的编号 */
+    public $id;
+
     /** @var $nowRecord Record 当前的record表对象 */
     public $nowRecord;
 
@@ -211,6 +214,7 @@ class Record{
             //建立id缓存
             $this->cacheObj->addIdCache($id,$this->table,$toInsertArray);
         }
+        $this->id = $id;
         //返回索引
         return $id;
     }
