@@ -100,17 +100,35 @@ class Select
      * @param $params
      * @return Record
      */
-    public static function fromTo($record,$params){
+    /**
+     * 界限条件查询
+     * @param $record Record
+     * @param $params
+     * @return Record
+     */
+    public static function fromTo($record,$params)
+    {
         self::initSelectObj($record);
-        if(realArray($params)){
-            foreach ($params as $field=>$array){
-                self::$selectObj->whereBetween($field,$array);
+        if (realArray($params)) {
+            foreach ($params as $field => $array) {
+                if (count($array) == 2) {
+                    $from = $array[0];
+                    $to = $array[1];
+                    if ($from != null and $to != null) {
+                        self::$selectObj->whereBetween($field, $array);
+                    } else if ($from != null) {
+                        self::$selectObj->where($field, ">", $from);
+                    } else if ($to != null) {
+                        self::$selectObj->where($field, "<", $to);
+                    }
+                }
             }
         }
         return $record;
     }
 
-    /**
+
+        /**
      * 模糊查询条件
      * @param $record Record
      * @param $params
