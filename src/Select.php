@@ -170,7 +170,7 @@ class Select
     public static function order($record,$field,$type){
         self::initSelectObj($record);
         $type = in_array($type,['asc','desc'])?$type:'asc';
-        if(in_array($field,array_keys(self::$fields))){
+        if(in_array($field,array_keys(self::$fields)) || $field == "id"){
             self::$selectObj->orderBy($field,$type);
         }
     }
