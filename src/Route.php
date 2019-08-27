@@ -313,7 +313,7 @@ EOF;
      */
     private function addFunctionNote($properties,$name,$requestName){
         $requestText = '$request';
-        $this->controllerText .="\t/*\n\t* {$name}\n";
+        $this->controllerText .="\t/**\n\t* {$name}\n";
         foreach ($properties as $param){
             $keyName = "$".$param['key'];
             $typeName = isset($param['type'])?$param['type']:'string';

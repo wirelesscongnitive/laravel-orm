@@ -117,9 +117,9 @@ class Select
                     if ($from != null and $to != null) {
                         self::$selectObj->whereBetween($field, $array);
                     } else if ($from != null) {
-                        self::$selectObj->where($field, ">", $from);
+                        self::$selectObj->where($field, ">=", $from);
                     } else if ($to != null) {
-                        self::$selectObj->where($field, "<", $to);
+                        self::$selectObj->where($field, "<=", $to);
                     }
                 }
             }

@@ -85,6 +85,8 @@ class $name Extends Record{
 EOF;
         $text.= "\n\t".'/** @var string $table 数据表名 */'."\n";
         $text.= "\t".'public $table ="'.$table.'";'."\n\n";
+        $text.= "\n\t".'/** @var bool $enableCache 缓存的控制开关 */'."\n";
+        $text.= "\t".'public static $enableCache = true;'."\n\n";
         $text.= "\t".'/** @var array $fields 字段列表 */'."\n";
         $text.= "\t".'public $fields = ['."\n";
         foreach ($fieldsList as $oneField){
