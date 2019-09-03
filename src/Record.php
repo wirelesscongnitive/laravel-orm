@@ -375,11 +375,19 @@ class Record{
             $type = $model->fields[$field];
             switch ($type){
                 case 'mini_time':
-                    $second_time = floor($value * 0.001);
-                    $date = date("Y-m-d H:i:s",$second_time);
+                    if($value > 0){
+                        $second_time = floor($value * 0.001);
+                        $date = date("Y-m-d H:i:s",$second_time);
+                    }else{
+                        $date = '-';
+                    }
                     return $date;
                 case 'time':
-                    return date('Y-m-d H:i:s',$value);
+                    if($value > 0){
+                        return date('Y-m-d H:i:s',$value);
+                    }else{
+                        return '-';
+                    }
                 case 'mini_date':
                     $second_time = floor($value * 0.001);
                     return date('Y-m-d',$second_time);
