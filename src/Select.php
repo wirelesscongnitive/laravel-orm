@@ -268,8 +268,10 @@ class Select
                 }else{
                     $oneInfo = $record->get($id);
                 }
-                if($needReturn)self::filterNoData($oneInfo);
-                $list[] = $oneInfo;
+                if(is_record($oneInfo)){
+                    if($needReturn)self::filterNoData($oneInfo);
+                    $list[] = $oneInfo;
+                }
             }
         }
         if($needPage){

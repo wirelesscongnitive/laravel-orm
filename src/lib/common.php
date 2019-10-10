@@ -61,3 +61,18 @@ if(!function_exists('convertUnderline')){
         return $ucFirst ? ucfirst($str) : $str;
     }
 }
+
+if(!function_exists("is_record")){
+    /**
+     * 判断是否是orm 模型
+     * @param $dbData
+     * @return bool
+     */
+    function is_record($dbData){
+        if($dbData instanceof \WirelessCognitive\LaravelOrm\Record){
+            return true;
+        }else{
+            return false;
+        }
+    }
+}
