@@ -56,14 +56,15 @@ class Record{
     /** @var $nowRecord Record 当前的record表对象 */
     public $nowRecord;
 
-    /** @var $enableCache bool 是否需要ID缓存 */
-    public static $enableCache = true;
-
     /** @var $table_name string 当前的数据表名称 */
     public $table_name;
 
     /** @var $cacheObj Cache */
     public $cacheObj;
+
+    /** @var bool $enableCache 默认都是开启id一级缓存的 继承子类当中可以进行复写 */
+    public static $enableCache = true;
+
     /**
      * @var bool $user_hiddle_fields 是否使用隐藏字段
      * 隐藏字段包含
@@ -118,6 +119,7 @@ class Record{
      * 数值的修改方法
      */
     public function update(){
+        $model = get_called_class();
         $toUpdateArray = [];
         foreach ($this->fields as $oneFields=>$type){
             if(isset($this->$oneFields) && !empty($this->$oneFields)){
@@ -131,7 +133,7 @@ class Record{
             }
             //更新数据库
             DB::table($this->table)->where('id',$this->id)->update($this->filterFieldsForUpdate($toUpdateArray));
-            if(self::$enableCache){
+            if($model::$enableCache){
                 //建立id缓存
                 $this->cacheObj->addIdCache($this->id,$this->table,$toUpdateArray);
             }
@@ -193,6 +195,7 @@ class Record{
      * @return int
      */
     public function insert(){
+        $model = get_called_class();
         $toInsertArray = [];
         foreach ($this->fields as $oneFields=>$type){
             if(isset($this->$oneFields) && !empty($this->$oneFields)){
@@ -210,7 +213,7 @@ class Record{
         }
         //存入数据库
         $id = DB::table($this->table)->insertGetId($toInsertArray);
-        if(self::$enableCache){
+        if($model::$enableCache){
             //建立id缓存
             $this->cacheObj->addIdCache($id,$this->table,$toInsertArray);
         }
@@ -271,11 +274,9 @@ class Record{
             //进行数据库的硬性删除
             DB::table($table)->where('id',$id)->delete();
         }
-        if(self::$enableCache){
-            //对id缓存进行清空
-            $cacheObj = new Cache();
-            $cacheObj->deleteIdCache($id,$table);
-        }
+        //对id缓存进行清空 有就清除没有就算了
+        $cacheObj = new Cache();
+        $cacheObj->deleteIdCache($id,$table);
     }
 
     /**
@@ -314,7 +315,7 @@ class Record{
         $model = new $model;
         $table = $model->table;
         $cacheObj = new Cache();
-        if(self::$enableCache){
+        if($model::$enableCache){
             $data = $cacheObj->get($id,$table);
         }else{
             $data = false;
@@ -331,7 +332,7 @@ class Record{
             }
             if(is_array($data) || is_object($data)) {
                 self::filterHiddenFields($data);
-                if (self::$enableCache) {
+                if ($model::$enableCache) {
                     $cacheObj->addIdCache($id, $table, $data);
                 }
             }

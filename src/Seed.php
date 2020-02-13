@@ -25,7 +25,6 @@ class Seed{
      */
     public function make(){
         set_time_limit(0);
-//        $mysqlConfig = config('database.connections.mysql');
         $mysqlConfig = [
             'driver' => 'mysql',
             'host' => env('DB_HOST', '127.0.0.1'),
