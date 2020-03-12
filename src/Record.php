@@ -310,6 +310,7 @@ class Record{
      * @return $this|array
      */
     public static function get($id){
+        if(!$id)return null;
         $model = get_called_class();
         /* @var $model Record */
         $model = new $model;
