@@ -123,7 +123,11 @@ class Record{
         $toUpdateArray = [];
         foreach ($this->fields as $oneFields=>$type){
             if(isset($this->$oneFields) && !empty($this->$oneFields)){
-                $toUpdateArray[$oneFields] = $this->filterFormat($this->$oneFields,$oneFields);
+                if(is_array($this->$oneFields) || is_object($this->$oneFields)){
+                    $toInsertArray[$oneFields] = json_encode($this->$oneFields, true);
+                }else{
+                    $toUpdateArray[$oneFields] = $this->filterFormat($this->$oneFields,$oneFields);
+                }
             }
         }
         if(isset($this->id)){
@@ -199,7 +203,11 @@ class Record{
         $toInsertArray = [];
         foreach ($this->fields as $oneFields=>$type){
             if(isset($this->$oneFields) && !empty($this->$oneFields)){
-                $toInsertArray[$oneFields] = $this->$oneFields;
+                if(is_array($this->$oneFields) || is_object($this->$oneFields)){
+                    $toInsertArray[$oneFields] = json_encode($this->$oneFields, true);
+                }else{
+                    $toInsertArray[$oneFields] = $this->$oneFields;
+                }
             }else{
                 if(!in_array($oneFields,['create_time','is_open','update_time'])){
                     $toInsertArray[$oneFields] = $this->getDefaultValue($oneFields);
