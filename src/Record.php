@@ -122,7 +122,7 @@ class Record{
         $model = get_called_class();
         $toUpdateArray = [];
         foreach ($this->fields as $oneFields=>$type){
-            if(isset($this->$oneFields) && !empty($this->$oneFields)){
+            if(isset($this->$oneFields) && !empty($this->$oneFields) && (int)$this->$oneFields !== 0){
                 if(is_array($this->$oneFields) || is_object($this->$oneFields)){
                     $toInsertArray[$oneFields] = json_encode($this->$oneFields, true);
                 }else{
