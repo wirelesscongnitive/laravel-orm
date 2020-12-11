@@ -259,6 +259,8 @@ class Select
         }else{
             $ids = self::$selectObj->pluck('id')->toArray();
         }
+        //重置静态变量 此处在数据拼装之前对静态变量属性进行初始化防止其对内部的影响
+        self::resetStaticVar();
         if(is_array($ids) && count($ids) > 0){
             foreach ($ids as $id){
                 if($function instanceof \Closure) {
@@ -280,8 +282,6 @@ class Select
         }else{
             $data = $list;
         }
-        //重置静态变量
-        self::resetStaticVar();
         return $data;
     }
     /**
